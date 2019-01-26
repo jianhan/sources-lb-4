@@ -1,9 +1,11 @@
 import Fetcher from './fetcher';
+import {RequestError} from 'request-promise/errors';
 
-test('basic', () => {
-  const fetcher = new Fetcher(
-    // 'http://www.football-data.co.uk/englandm.php1221',
-    'saddass',
-  );
-  fetcher.fetchHtmlContent();
+test('url do not exists expected error', async () => {
+  // expect(async () => {
+  //   const f = new Fetcher('http://test.test');
+  //   await f.fetchHtmlContent();
+  // }).toThrow();
+  const f = new Fetcher('http://test.test');
+  await expect(f.fetchHtmlContent()).rejects.toBeInstanceOf(RequestError);
 });

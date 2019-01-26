@@ -31,7 +31,9 @@
     "prestart": "npm run build",
     "start": "node .",
     "prepublishOnly": "npm run test",
-    "jest-unit": "jest"
+    "jest": "jest",
+    "jest-unit": "jest -c jest.config.unit.js",
+    "jest-integration": "jest -c jest.config.integration.js"
   },
   "repository": {
     "type": "git"
@@ -57,10 +59,15 @@
     "@loopback/service-proxy": "^1.0.6",
     "@types/request": "^2.48.1",
     "@types/request-promise": "^4.1.42",
+    "@types/validator": "^10.9.0",
+    "@types/winston": "^2.4.4",
+    "app-root-path": "^2.1.0",
     "cheerio": "^1.0.0-rc.2",
     "commander": "^2.19.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.2",
+    "validator": "^10.11.0",
+    "winston": "^3.1.0"
   },
   "devDependencies": {
     "@loopback/build": "^1.2.0",

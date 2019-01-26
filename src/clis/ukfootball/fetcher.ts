@@ -1,4 +1,6 @@
 import * as rp from 'request-promise';
+import * as validator from 'validator';
+import logger from '../../configs/winston';
 
 export default class Fetcher {
   private htmlContent: string;
@@ -6,16 +8,28 @@ export default class Fetcher {
   private url: string;
 
   constructor(url: string) {
+    if (!validator.isURL(url)) {
+      throw new Error('not a valid url :' + url);
+    }
+
     this.url = url;
   }
 
-  public fetchHtmlContent(): void {
-    rp(this.url)
+  public async fetchHtmlContent() {
+    await rp(this.url)
       .then((htmlContent: string) => {
+        logger.log({
+          level: 'debug',
+          message: htmlContent,
+        });
         this.htmlContent = htmlContent;
       })
       .catch((err: Error) => {
-        console.log(err);
+        logger.log({
+          level: 'warn',
+          message: err,
+        });
+        throw err;
       });
   }
 }
