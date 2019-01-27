@@ -57,6 +57,7 @@
     "@loopback/rest": "^1.5.3",
     "@loopback/rest-explorer": "^1.1.6",
     "@loopback/service-proxy": "^1.0.6",
+    "@types/cheerio": "^0.22.10",
     "@types/request": "^2.48.1",
     "@types/request-promise": "^4.1.42",
     "@types/validator": "^10.9.0",
