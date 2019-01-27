@@ -1,5 +1,5 @@
 import EplLeagueScraper from './eplLeagueScraper';
-import {EplGame} from './eplGame';
+import {EplHtml} from './testdata/html';
 
 test('empty html expected error', () => {
   expect(() => {
@@ -9,6 +9,12 @@ test('empty html expected error', () => {
 
 test('can not query correct links', () => {
   const els = new EplLeagueScraper('<html>no links provided</html>');
+  els.scrape();
+  expect(els.eplGames).toEqual([]);
+});
+
+test('successfuly retrieve links', () => {
+  const els = new EplLeagueScraper(EplHtml);
   els.scrape();
   expect(els.eplGames).toEqual([]);
 });
