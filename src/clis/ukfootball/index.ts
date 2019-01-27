@@ -1,3 +1,9 @@
-const eplUrl = 'http://www.football-data.co.uk/englandm.php';
+import EplLeagueScraper from './eplLeagueScraper';
+import {EplHtml} from './testdata/html';
 
-console.log('hello');
+async function test() {
+  const els = new EplLeagueScraper(EplHtml, 'http://www.football-data.co.uk');
+  await els.scrape();
+}
+
+test();

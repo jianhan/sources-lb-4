@@ -3,6 +3,9 @@ import * as cheerio from 'cheerio';
 import * as validator from 'validator';
 import logger from '../../configs/winston';
 import * as _ from 'lodash';
+import * as download from 'download';
+import * as moment from 'moment';
+import * as fs from 'fs';
 
 export default class EplLeagueScraper {
   private _html: string;
@@ -11,12 +14,24 @@ export default class EplLeagueScraper {
 
   private _hrefs: string[];
 
-  constructor(html: string) {
+  private _downloadDir: string;
+
+  private _baseUrl: string;
+
+  constructor(html: string, baseUrl: string) {
     if (validator.isEmpty(html)) {
       throw new Error(`empty html : ${html}`);
     }
+
+    if (!validator.isURL(baseUrl)) {
+      throw new Error(`invalid base url : ${baseUrl}`);
+    }
+
     this._html = html;
     this._eplGames = [];
+    this._downloadDir =
+      './csvs/ukfootball/epl/' + moment().format('YYYY-MM-DD');
+    this._baseUrl = baseUrl;
   }
 
   get eplGames(): EplGame[] {
@@ -27,9 +42,9 @@ export default class EplLeagueScraper {
     return this._hrefs;
   }
 
-  public scrape(): void {
+  public async scrape() {
     this.generateDownloadLinks();
-    this.downloadFiles();
+    await this.downloadFiles();
   }
 
   private generateDownloadLinks(): void {
@@ -41,7 +56,6 @@ export default class EplLeagueScraper {
             .text()
             .trim();
           const href = $(this).attr('href');
-          console.log(text);
           if (text === 'Premier League' && _.endsWith(href, '.csv')) {
             return $(this).attr('href');
           }
@@ -60,7 +74,7 @@ export default class EplLeagueScraper {
     }
   }
 
-  private downloadFiles(): void {
+  private async downloadFiles() {
     if (this._hrefs.length === 0) {
       logger.log({
         level: 'warn',
@@ -68,5 +82,60 @@ export default class EplLeagueScraper {
       });
       return;
     }
+    this._hrefs = this._hrefs.slice(0, 4);
+
+    const fullDownloadUrls: string[] = [];
+    this._hrefs.forEach((href: string) => {
+      const fullDOwnloadUrl = `${this._baseUrl
+        .trim()
+        .replace(/\/$/, '')
+        .trim()}/${href}`;
+      fullDownloadUrls.push(fullDOwnloadUrl);
+    });
+    console.log(fullDownloadUrls);
+
+    // const result = await Promise.all(
+    //   fullDownloadUrls.map(x => Promise.delay(3000).then(() => download(x))),
+    // ).then(data => {
+    //   console.log('files downloaded! ' + this._downloadDir);
+    //   fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
+    // });
+
+    const result = await Promise.all(
+      fullDownloadUrls.map(x => download(x)),
+    ).then(data => {
+      console.log('files downloaded! ' + this._downloadDir);
+      fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
+    });
+
+    return result;
+    // const promises: Promise<Buffer>[] = [];
+    // this._hrefs.forEach((href: string) => {
+    //   const delayedDownload = Promise.delay(1000).then(function() {
+    //     return download(
+    //       `${this._baseUrl
+    //         .trim()
+    //         .replace(/\/$/, '')
+    //         .trim()}/${href}`,
+    //       this._downloadDir,
+    //     );
+    //   });
+    //   promises.push(delayedDownload);
+    // });
+
+    // await Promise.all(promises)
+    //   .then(() => {
+    //     logger.log({
+    //       level: 'debug',
+    //       message: 'file downloaded',
+    //     });
+    //   })
+    //   .catch(err => {
+    //     logger.log({
+    //       level: 'error',
+    //       message: `error while downlading file: ${err}`,
+    //     });
+    //     throw err;
+    //   });
   }
 }
