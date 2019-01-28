@@ -9,9 +9,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as slug from 'slug';
 import * as BlueBirdPromise from 'bluebird';
+import LeagueScraperInterface from './leagueScraperInterface';
 const appRoot = require('app-root-path');
 
-export default class EplLeagueScraper {
+export default class EplLeagueScraper implements LeagueScraperInterface {
   private _html: string;
 
   private _eplGames: EplGame[];
