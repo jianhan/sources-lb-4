@@ -6,6 +6,7 @@ import * as _ from 'lodash';
 import * as download from 'download';
 import * as moment from 'moment';
 import * as fs from 'fs';
+const appRoot = require('app-root-path');
 
 export default class EplLeagueScraper {
   private _html: string;
@@ -30,7 +31,7 @@ export default class EplLeagueScraper {
     this._html = html;
     this._eplGames = [];
     this._downloadDir =
-      './csvs/ukfootball/epl/' + moment().format('YYYY-MM-DD');
+      appRoot + '/csvs/ukfootball/epl/' + moment().format('YYYY-MM-DD');
     this._baseUrl = baseUrl;
   }
 
@@ -82,33 +83,51 @@ export default class EplLeagueScraper {
       });
       return;
     }
-    this._hrefs = this._hrefs.slice(0, 4);
-
-    const fullDownloadUrls: string[] = [];
-    this._hrefs.forEach((href: string) => {
-      const fullDOwnloadUrl = `${this._baseUrl
+    this._hrefs.forEach(async (href: string) => {
+      const fullDownloadUrl = `${this._baseUrl
         .trim()
         .replace(/\/$/, '')
         .trim()}/${href}`;
-      fullDownloadUrls.push(fullDOwnloadUrl);
+      await download(fullDownloadUrl)
+        .then(data => {
+          console.log('files downloaded! ' + this._downloadDir);
+          fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
+        })
+        .catch(err => {
+          logger.log({
+            level: 'error',
+            message: 'file downloaded error ' + err,
+          });
+        });
     });
-    console.log(fullDownloadUrls);
+
+    // const result = await BlueBirdPromise.all(
+    //   fullDownloadUrls.map(x =>
+    //     BlueBirdPromise.delay(3000).then(() => {
+    //       console.log('start downloading');
+    //       return download(x);
+    //     }),
+    //   ),
+    // )
+    //   .then(data => {
+    //     console.log('files downloaded! ' + this._downloadDir);
+    //     fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
+    //   })
+    //   .catch(err => {
+    //     logger.log({
+    //       level: 'error',
+    //       message: 'file downloaded error ' + err,
+    //     });
+    //   });
 
     // const result = await Promise.all(
-    //   fullDownloadUrls.map(x => Promise.delay(3000).then(() => download(x))),
+    //   fullDownloadUrls.map(x => download(x)),
     // ).then(data => {
     //   console.log('files downloaded! ' + this._downloadDir);
     //   fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
     // });
 
-    const result = await Promise.all(
-      fullDownloadUrls.map(x => download(x)),
-    ).then(data => {
-      console.log('files downloaded! ' + this._downloadDir);
-      fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
-    });
-
-    return result;
+    // return result;
     // const promises: Promise<Buffer>[] = [];
     // this._hrefs.forEach((href: string) => {
     //   const delayedDownload = Promise.delay(1000).then(function() {
