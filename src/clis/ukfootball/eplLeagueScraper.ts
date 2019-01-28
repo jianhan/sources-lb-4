@@ -6,6 +6,9 @@ import * as _ from 'lodash';
 import * as download from 'download';
 import * as moment from 'moment';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as slug from 'slug';
+import * as BlueBirdPromise from 'bluebird';
 const appRoot = require('app-root-path');
 
 export default class EplLeagueScraper {
@@ -32,6 +35,9 @@ export default class EplLeagueScraper {
     this._eplGames = [];
     this._downloadDir =
       appRoot + '/csvs/ukfootball/epl/' + moment().format('YYYY-MM-DD');
+    if (!fs.existsSync(this._downloadDir)) {
+      fs.mkdirSync(this._downloadDir);
+    }
     this._baseUrl = baseUrl;
   }
 
@@ -64,7 +70,7 @@ export default class EplLeagueScraper {
         .get();
       logger.log({
         level: 'debug',
-        message: {hrefs: this._hrefs},
+        message: {hrefs: this._hrefs, length: this._hrefs.length},
       });
     } catch (err) {
       logger.log({
@@ -76,6 +82,16 @@ export default class EplLeagueScraper {
   }
 
   private async downloadFiles() {
+    fs.readdir(this._downloadDir, (err, files) => {
+      if (err) throw err;
+
+      for (const file of files) {
+        fs.unlink(path.join(this._downloadDir, file), e => {
+          if (e) throw e;
+        });
+      }
+    });
+
     if (this._hrefs.length === 0) {
       logger.log({
         level: 'warn',
@@ -83,78 +99,38 @@ export default class EplLeagueScraper {
       });
       return;
     }
-    this._hrefs.forEach(async (href: string) => {
-      const fullDownloadUrl = `${this._baseUrl
-        .trim()
-        .replace(/\/$/, '')
-        .trim()}/${href}`;
-      await download(fullDownloadUrl)
-        .then(data => {
-          console.log('files downloaded! ' + this._downloadDir);
-          fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
-        })
-        .catch(err => {
-          logger.log({
-            level: 'error',
-            message: 'file downloaded error ' + err,
-          });
+
+    this._hrefs
+      .reduce((promise, href) => {
+        const fullDownloadUrl = `${this._baseUrl
+          .trim()
+          .replace(/\/$/, '')
+          .trim()}/${href}`;
+        const rand = Math.floor(Math.random() * 8000) + 2000;
+        return BlueBirdPromise.delay(rand).then(() => {
+          return download(fullDownloadUrl)
+            .then(data => {
+              fs.writeFileSync(`${this._downloadDir}/${slug(href)}.csv`, data);
+            })
+            .catch(e => {
+              logger.log({
+                level: 'error',
+                message: 'got err while downloading ' + e,
+              });
+            });
         });
-    });
-
-    // const result = await BlueBirdPromise.all(
-    //   fullDownloadUrls.map(x =>
-    //     BlueBirdPromise.delay(3000).then(() => {
-    //       console.log('start downloading');
-    //       return download(x);
-    //     }),
-    //   ),
-    // )
-    //   .then(data => {
-    //     console.log('files downloaded! ' + this._downloadDir);
-    //     fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
-    //   })
-    //   .catch(err => {
-    //     logger.log({
-    //       level: 'error',
-    //       message: 'file downloaded error ' + err,
-    //     });
-    //   });
-
-    // const result = await Promise.all(
-    //   fullDownloadUrls.map(x => download(x)),
-    // ).then(data => {
-    //   console.log('files downloaded! ' + this._downloadDir);
-    //   fs.writeFileSync(`${this._downloadDir}/${moment().unix()}.csv`, data);
-    // });
-
-    // return result;
-    // const promises: Promise<Buffer>[] = [];
-    // this._hrefs.forEach((href: string) => {
-    //   const delayedDownload = Promise.delay(1000).then(function() {
-    //     return download(
-    //       `${this._baseUrl
-    //         .trim()
-    //         .replace(/\/$/, '')
-    //         .trim()}/${href}`,
-    //       this._downloadDir,
-    //     );
-    //   });
-    //   promises.push(delayedDownload);
-    // });
-
-    // await Promise.all(promises)
-    //   .then(() => {
-    //     logger.log({
-    //       level: 'debug',
-    //       message: 'file downloaded',
-    //     });
-    //   })
-    //   .catch(err => {
-    //     logger.log({
-    //       level: 'error',
-    //       message: `error while downlading file: ${err}`,
-    //     });
-    //     throw err;
-    //   });
+      }, BlueBirdPromise.delay(5000).then(() => Promise.resolve()))
+      .then(() => {
+        logger.log({
+          level: 'info',
+          message: 'finished all downloads ',
+        });
+      })
+      .catch((err: Error) => {
+        logger.log({
+          level: 'error',
+          message: 'finished all, got error ' + err,
+        });
+      });
   }
 }
