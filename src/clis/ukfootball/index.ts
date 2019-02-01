@@ -1,13 +1,14 @@
 import {Application} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
 import {EplLeagueGameRepository} from '../../repositories';
-import {MysqlDataSource} from '../../datasources/mysql.datasource';
+import {MongodbDataSource} from '../../datasources/mongodb.datasource';
+
 // Using the Mixin
 class SourcesApplication extends RepositoryMixin(Application) {}
 
 const app = new SourcesApplication();
 // EplLeagueGameRepository will be bound to key `repositories.EplLeagueGameRepository`
-app.dataSource(MysqlDataSource);
+app.dataSource(MongodbDataSource);
 app.repository(EplLeagueGameRepository);
 
 const test = app

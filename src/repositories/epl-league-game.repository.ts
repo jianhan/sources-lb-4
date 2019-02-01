@@ -1,15 +1,13 @@
 import {DefaultCrudRepository, juggler} from '@loopback/repository';
 import {EplLeagueGame} from '../models';
-import {MysqlDataSource} from '../datasources';
+import {MongodbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
 
 export class EplLeagueGameRepository extends DefaultCrudRepository<
   EplLeagueGame,
   typeof EplLeagueGame.prototype.id
 > {
-  constructor(
-    @inject('datasources.mysql') dataSource: MysqlDataSource,
-  ) {
+  constructor(@inject('datasources.mongodb') dataSource: MongodbDataSource) {
     super(EplLeagueGame, dataSource);
   }
 }
