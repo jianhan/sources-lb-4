@@ -1,5 +1,6 @@
 import EplLeagueScraper from './eplLeagueScraper';
 import {EplHtml} from './testdata/html';
+require('dotenv');
 
 test('empty html expected error', () => {
   expect(() => {
@@ -13,13 +14,13 @@ test('can not query correct links', () => {
     'http://www.football-data.co.uk',
   );
   els.scrape();
-  expect(els.eplGames).toEqual([]);
+  expect(els.hrefs).toEqual([]);
 });
 
 test('successfuly retrieve links', () => {
   const els = new EplLeagueScraper(EplHtml, 'http://www.football-data.co.uk');
   els.scrape();
-  expect(els.eplGames).toEqual([]);
+  expect(els.hrefs).toEqual([]);
 });
 
 test('download csvs', async () => {

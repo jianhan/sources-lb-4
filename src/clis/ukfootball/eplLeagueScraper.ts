@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as slug from 'slug';
 import * as BlueBirdPromise from 'bluebird';
 import LeagueScraperInterface from './leagueScraperInterface';
+import {exit} from 'shelljs';
 const appRoot = require('app-root-path');
 
 /**
@@ -72,12 +73,14 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
       throw new Error(`invalid base url : ${baseUrl}`);
     }
 
+    const dir = process.env.UKFOOTBALL_CSV_DIR;
+    if (!dir) {
+      throw new Error('UKFOOTBALL_CSV_DIR not set');
+    }
+
     this._html = html;
-    this._downloadDir =
-      appRoot +
-      process.env['UKFOOTBALL_CSV_DIR'] +
-      'epl/' +
-      moment().format('YYYY-MM-DD');
+    this._downloadDir = appRoot + dir + 'epl/' + moment().format('YYYY-MM-DD');
+
     if (!fs.existsSync(this._downloadDir)) {
       fs.mkdirSync(this._downloadDir);
     }
