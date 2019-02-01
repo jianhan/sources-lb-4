@@ -1,4 +1,3 @@
-import {EplGame} from './eplGame';
 import * as cheerio from 'cheerio';
 import * as validator from 'validator';
 import logger from '../../configs/winston';
@@ -12,17 +11,58 @@ import * as BlueBirdPromise from 'bluebird';
 import LeagueScraperInterface from './leagueScraperInterface';
 const appRoot = require('app-root-path');
 
+/**
+ * EplLeagueScraper will download all EPL data into csvs.
+ *
+ * @export
+ * @class EplLeagueScraper
+ * @implements {LeagueScraperInterface}
+ */
 export default class EplLeagueScraper implements LeagueScraperInterface {
+  /**
+   * _html is html page content will be passed in.
+   *
+   * @private
+   * @type {string}
+   * @memberof EplLeagueScraper
+   */
   private _html: string;
 
-  private _eplGames: EplGame[];
-
+  /**
+   * _hrefs is all the links which represent csvs.
+   *
+   * @private
+   * @type {string[]}
+   * @memberof EplLeagueScraper
+   */
   private _hrefs: string[];
 
+  /**
+   * _downloadDir specify where csvs will be stored.
+   *
+   * @private
+   * @type {string}
+   * @memberof EplLeagueScraper
+   */
   private _downloadDir: string;
 
+  /**
+   * _baseUrl specify the domain/homepage url, since hrefs got back
+   * are relative ones.
+   *
+   * @private
+   * @type {string}
+   * @memberof EplLeagueScraper
+   */
   private _baseUrl: string;
 
+  /**
+   * Creates an instance of EplLeagueScraper.
+   *
+   * @param {string} html
+   * @param {string} baseUrl
+   * @memberof EplLeagueScraper
+   */
   constructor(html: string, baseUrl: string) {
     if (validator.isEmpty(html)) {
       throw new Error(`empty html : ${html}`);
@@ -33,28 +73,45 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
     }
 
     this._html = html;
-    this._eplGames = [];
     this._downloadDir =
-      appRoot + '/csvs/ukfootball/epl/' + moment().format('YYYY-MM-DD');
+      appRoot +
+      process.env['UKFOOTBALL_CSV_DIR'] +
+      'epl/' +
+      moment().format('YYYY-MM-DD');
     if (!fs.existsSync(this._downloadDir)) {
       fs.mkdirSync(this._downloadDir);
     }
     this._baseUrl = baseUrl;
   }
 
-  get eplGames(): EplGame[] {
-    return this._eplGames;
-  }
-
+  /**
+   * hrefs is a getter for hrefs.
+   *
+   * @readonly
+   * @type {string[]}
+   * @memberof EplLeagueScraper
+   */
   get hrefs(): string[] {
     return this._hrefs;
   }
 
+  /**
+   * scrape is the main function which will download all csvs.
+   *
+   * @memberof EplLeagueScraper
+   */
   public async scrape() {
     this.generateDownloadLinks();
     await this.downloadFiles();
   }
 
+  /**
+   * generateDownloadLinks read html content and extract all hrefs which
+   * contain csvs.
+   *
+   * @private
+   * @memberof EplLeagueScraper
+   */
   private generateDownloadLinks(): void {
     const $ = cheerio.load(this._html);
     try {
@@ -82,6 +139,13 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
     }
   }
 
+  /**
+   * downloadFiles will download csvs into specifie dir.
+   *
+   * @private
+   * @returns
+   * @memberof EplLeagueScraper
+   */
   private async downloadFiles() {
     fs.readdir(this._downloadDir, (err, files) => {
       if (err) throw err;
@@ -120,7 +184,7 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
               });
             });
         });
-      }, BlueBirdPromise.delay(5000).then(() => Promise.resolve()))
+      }, BlueBirdPromise.resolve())
       .then(() => {
         logger.log({
           level: 'info',
