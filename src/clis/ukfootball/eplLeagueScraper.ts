@@ -79,7 +79,7 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
     }
 
     this._html = html;
-    this._downloadDir = appRoot + dir + 'epl/' + moment().format('YYYY-MM-DD');
+    this._downloadDir = appRoot + dir + 'epl';
 
     if (!fs.existsSync(this._downloadDir)) {
       fs.mkdirSync(this._downloadDir);
@@ -150,17 +150,28 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
    * @memberof EplLeagueScraper
    */
   private async downloadFiles() {
-    fs.readdir(this._downloadDir, (err, files) => {
-      if (err) throw err;
+    const fileHrefs: string[] = [];
+    const files = fs.readdirSync(this._downloadDir);
+
+    // check if file already been downloaded
+    for (const href of this._hrefs) {
+      let notExist: boolean = true;
 
       for (const file of files) {
-        fs.unlink(path.join(this._downloadDir, file), e => {
-          if (e) throw e;
-        });
+        const hrefArr = href.split('/');
+        const hrefFileName = hrefArr[hrefArr.length - 2] + '.csv';
+        if (hrefFileName === file) {
+          notExist = false;
+          break;
+        }
       }
-    });
 
-    if (this._hrefs.length === 0) {
+      if (notExist) {
+        fileHrefs.push(href);
+      }
+    }
+
+    if (fileHrefs.length === 0) {
       logger.log({
         level: 'warn',
         message: 'empty hrefs, unable to download any files',
@@ -169,16 +180,17 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
     }
 
     const promises: BlueBirdPromise<Buffer>[] = [];
-    this._hrefs.forEach(href => {
+    fileHrefs.forEach(href => {
       const rand = Math.floor(Math.random() * 8000) + 2000;
       const fullDownloadUrl = `${this._baseUrl
         .trim()
         .replace(/\/$/, '')
         .trim()}/${href}`;
+      const fileNameArr = href.split('/');
       promises.push(
         BlueBirdPromise.delay(rand).then(() =>
           download(fullDownloadUrl, this._downloadDir, {
-            filename: `${slug(href)}.csv`,
+            filename: `${fileNameArr[fileNameArr.length - 2]}.csv`,
           }),
         ),
       );
