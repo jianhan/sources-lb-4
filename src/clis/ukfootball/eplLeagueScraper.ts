@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as slug from 'slug';
 import * as BlueBirdPromise from 'bluebird';
 import LeagueScraperInterface from './leagueScraperInterface';
-import {exit} from 'shelljs';
+
 const appRoot = require('app-root-path');
 
 /**
@@ -131,13 +131,13 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
         .get();
       logger.log({
         level: 'debug',
-        message: {hrefs: this._hrefs, length: this._hrefs.length},
+        message: {
+          hrefs: this._hrefs,
+          length: this._hrefs.length,
+        },
       });
     } catch (err) {
-      logger.log({
-        level: 'warn',
-        message: err,
-      });
+      logger.log({level: 'warn', message: err});
       throw err;
     }
   }
@@ -168,37 +168,22 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
       return;
     }
 
-    this._hrefs
-      .reduce((promise, href) => {
-        const fullDownloadUrl = `${this._baseUrl
-          .trim()
-          .replace(/\/$/, '')
-          .trim()}/${href}`;
-        const rand = Math.floor(Math.random() * 8000) + 2000;
-        return BlueBirdPromise.delay(rand).then(() => {
-          return download(fullDownloadUrl)
-            .then(data => {
-              fs.writeFileSync(`${this._downloadDir}/${slug(href)}.csv`, data);
-            })
-            .catch(e => {
-              logger.log({
-                level: 'error',
-                message: 'got err while downloading ' + e,
-              });
-            });
-        });
-      }, BlueBirdPromise.resolve())
-      .then(() => {
-        logger.log({
-          level: 'info',
-          message: 'finished all downloads ',
-        });
-      })
-      .catch((err: Error) => {
-        logger.log({
-          level: 'error',
-          message: 'finished all, got error ' + err,
-        });
-      });
+    const promises: BlueBirdPromise<Buffer>[] = [];
+    this._hrefs.forEach(href => {
+      const rand = Math.floor(Math.random() * 8000) + 2000;
+      const fullDownloadUrl = `${this._baseUrl
+        .trim()
+        .replace(/\/$/, '')
+        .trim()}/${href}`;
+      promises.push(
+        BlueBirdPromise.delay(rand).then(() =>
+          download(fullDownloadUrl, this._downloadDir, {
+            filename: `${slug(href)}.csv`,
+          }),
+        ),
+      );
+    });
+
+    return Promise.all(promises);
   }
 }
