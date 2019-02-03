@@ -72,6 +72,10 @@ export default class EplLeagueImporter {
             eplLeagueGame.awayTeam = record.AwayTeam;
             eplLeagueGame.fthg = record.FTHG;
             eplLeagueGame.ftag = record.FTAG;
+            eplLeagueGame.ftr = record.FTR;
+            eplLeagueGame.hthg = record.HTHG;
+            eplLeagueGame.htag = record.HTAG;
+            eplLeagueGame.htr = record.HTR;
 
             games.push(eplLeagueGame);
           }
