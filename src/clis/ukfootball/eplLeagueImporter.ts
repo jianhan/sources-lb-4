@@ -5,6 +5,8 @@ import * as parse from 'csv-parse';
 import logger from '../../configs/winston';
 import {EplLeagueGame} from '../../models/epl-league-game.model';
 import {exit} from 'shelljs';
+import {resolve} from 'bluebird';
+import moment = require('moment');
 const appRoot = require('app-root-path');
 
 export default class EplLeagueImporter {
@@ -24,6 +26,24 @@ export default class EplLeagueImporter {
   }
 
   public import() {
+    // fs.readdir(this._downloadDir, (err: Error, csvs: string[]) => {
+    //   const csvCombined = csvs.reduce((combinedContent, csv) => {
+    //     const fileContent = fs.readFileSync(
+    //       this._downloadDir + '/' + csv,
+    //       'utf8',
+    //     );
+    //     return combinedContent + fileContent;
+    //   });
+    //   console.log(csvCombined);
+    // });
+    // return false;
+    // .then(
+    //   function(filenames) {
+    //     filenames = filenames.filter(isDataFile);
+    //     console.log(filenames);
+    //     return Promise.all(filenames.map(getFile));
+    //   },
+    // );
     const files = fs.readdirSync(this._downloadDir);
     const games: EplLeagueGame[] = [];
     files.forEach(file => {
@@ -41,19 +61,23 @@ export default class EplLeagueImporter {
         .on('readable', function() {
           let record;
           while ((record = this.read())) {
-            const eplLeagueGame: EplLeagueGame = Object.assign(
-              new EplLeagueGame(),
-              record,
-            );
+            const eplLeagueGame = new EplLeagueGame();
+            eplLeagueGame.div = record.Div;
+            const dateObj: Date = moment(record.Date, [
+              'DD/MM/YY',
+              'DD/MM/YYYY',
+            ]).toDate();
+            eplLeagueGame.date = dateObj;
             games.push(eplLeagueGame);
           }
         })
         // When we are done, test that the parsed output matched what expected
-        .on('end', function() {
+        .on('end', () => {
           logger.log({
             level: 'info',
             message: 'finished read: ' + file + ' len ' + games.length,
           });
+          console.log(games[0]);
         })
         .on('error', err => {
           logger.log({

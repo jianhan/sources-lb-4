@@ -19,4 +19,11 @@ export default class App extends RepositoryMixin(Application) {
       .inScope(BindingScope.SINGLETON);
     return application;
   }
+
+  async stop() {
+    console.log('application is shutting down...');
+    // The superclass stop method will call stop on all servers that are
+    // bound to the application.
+    await super.stop();
+  }
 }

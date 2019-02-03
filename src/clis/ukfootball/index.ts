@@ -9,8 +9,9 @@ import EplLeagueImporter from './eplLeagueImporter';
 
 const app = App.getInstance();
 
-const importer = app.getSync<EplLeagueImporter>('importers.eplLeague');
-importer.import();
+app.get('importers.eplLeague').then(async (importer: EplLeagueImporter) => {
+  importer.import();
+});
 
 // async function process() {
 //   const eplFetcher = new Fetcher(eplUrl);
