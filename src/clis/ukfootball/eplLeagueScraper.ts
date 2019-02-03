@@ -3,10 +3,7 @@ import * as validator from 'validator';
 import logger from '../../configs/winston';
 import * as _ from 'lodash';
 import * as download from 'download';
-import * as moment from 'moment';
 import * as fs from 'fs';
-import * as path from 'path';
-import * as slug from 'slug';
 import * as BlueBirdPromise from 'bluebird';
 import LeagueScraperInterface from './leagueScraperInterface';
 
@@ -143,7 +140,8 @@ export default class EplLeagueScraper implements LeagueScraperInterface {
   }
 
   /**
-   * downloadFiles will download csvs into specifie dir.
+   * downloadFiles will download csvs into specifie dir, only download the files that
+   * are not already exists.
    *
    * @private
    * @returns

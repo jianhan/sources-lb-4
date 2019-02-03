@@ -15,6 +15,16 @@ export class EplLeagueGame extends Entity {
   })
   div: string;
 
+  @property({
+    description: 'Date',
+  })
+  date: Date;
+
+  @property({
+    description: 'home team',
+  })
+  homeTeam: Date;
+
   constructor(data?: Partial<EplLeagueGame>) {
     super(data);
   }

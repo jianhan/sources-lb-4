@@ -20,6 +20,7 @@ services:
     volumes:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
+    restart: always
 
 # Names our volume
 volumes:
