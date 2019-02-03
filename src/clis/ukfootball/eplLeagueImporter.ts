@@ -68,6 +68,11 @@ export default class EplLeagueImporter {
               'DD/MM/YYYY',
             ]).toDate();
             eplLeagueGame.date = dateObj;
+            eplLeagueGame.homeTeam = record.HomeTeam;
+            eplLeagueGame.awayTeam = record.AwayTeam;
+            eplLeagueGame.fthg = record.FTHG;
+            eplLeagueGame.ftag = record.FTAG;
+
             games.push(eplLeagueGame);
           }
         })
